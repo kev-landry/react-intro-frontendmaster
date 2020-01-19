@@ -1,13 +1,26 @@
 import React, { useState, useEffect } from "react";
 import pet, { ANIMALS } from "@frontendmasters/pet";
+import Results from "./Results";
 import useDropdown from "./useDropdown";
 
 const SearchParams = () => {
   // const location = "Seattle, WA";
   const [location, setLocation] = useState("Seattle, WA");
   const [breeds, setBreeds] = useState([]);
-  const [animal, AnimalDropdown] = useDropdown("Animal", "chien", ANIMALS);
+  const [animal, AnimalDropdown] = useDropdown("Animal", "dog", ANIMALS);
   const [breed, BreedDropdown, setBreed] = useDropdown("Breed", "", breeds);
+  const [pets, setPets] = useState([]);
+
+  // async function always return a promise
+  async function requestPets() {
+    const { animals } = await pet.animals({
+      location,
+      breed,
+      type: animal
+    });
+    // Once animals is done we move on setPets()
+    setPets(animals || []);
+  }
 
   // Rendered once SearchParams got rendered for the first time
   useEffect(() => {
@@ -19,12 +32,17 @@ const SearchParams = () => {
       // From objects we grab only breed names (strings) using map
       const breedStrings = apiBreeds.map(({ name }) => name);
       setBreeds(breedStrings);
-    }, console.error);
+    });
   }, [animal, setBreed, setBreeds]);
 
   return (
     <div className="search-params">
-      <form action="">
+      <form
+        onSubmit={e => {
+          e.preventDefault();
+          requestPets();
+        }}
+      >
         <label htmlFor="location">
           location
           <input
@@ -75,6 +93,7 @@ const SearchParams = () => {
 
         <button>Submit</button>
       </form>
+      <Results pets={pets} />
     </div>
   );
 };
